@@ -1,0 +1,31 @@
+// 显示声明，以表示使用proto3的语法
+syntax = "proto3";
+
+// 函数
+service MailManagerService {
+    // 发送邮件
+    rpc SendMail (SendTextMailRequest) returns (SendTextMailReply) {
+    }
+}
+
+// 发送邮件（出文本）（请求）
+message SendTextMailRequest {
+    // 邮件收信人
+    repeated string receiver = 1;
+    // 邮件标题
+    string title = 2;
+    // 邮件正文
+    string content = 3;
+    // 邮件服务的账号（不是邮箱账号，是调用RPC服务的账号）
+    string account = 4;
+    // 密码（同上）
+    string pw = 5;
+}
+
+// 发送邮件（出文本）（返回）
+message SendTextMailReply {
+    // 状态码 200正常，0失败
+    int32 code = 1;
+    // 信息，正常时为success，报错时返回错误信息
+    string msg = 2;
+}
