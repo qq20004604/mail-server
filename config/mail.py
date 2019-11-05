@@ -7,3 +7,8 @@ MAIL_CONFIG = {
     'password': "test",
     'host': 'smtp.exmail.qq.com'
 }
+
+# 邮件服务的端口
+PORT = 49999
+# server 的 HOST，客户端测试时使用
+HOST = 'localhost'

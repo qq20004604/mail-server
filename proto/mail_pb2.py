@@ -126,18 +126,18 @@ DESCRIPTOR.message_types_by_name['SendTextMailRequest'] = _SENDTEXTMAILREQUEST
 DESCRIPTOR.message_types_by_name['SendTextMailReply'] = _SENDTEXTMAILREPLY
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
-SendTextMailRequest = _reflection.GeneratedProtocolMessageType('SendTextMailRequest', (_message.Message,), dict(
-  DESCRIPTOR = _SENDTEXTMAILREQUEST,
-  __module__ = 'mail_pb2'
+SendTextMailRequest = _reflection.GeneratedProtocolMessageType('SendTextMailRequest', (_message.Message,), {
+  'DESCRIPTOR' : _SENDTEXTMAILREQUEST,
+  '__module__' : 'mail_pb2'
   # @@protoc_insertion_point(class_scope:SendTextMailRequest)
-  ))
+  })
 _sym_db.RegisterMessage(SendTextMailRequest)
 
-SendTextMailReply = _reflection.GeneratedProtocolMessageType('SendTextMailReply', (_message.Message,), dict(
-  DESCRIPTOR = _SENDTEXTMAILREPLY,
-  __module__ = 'mail_pb2'
+SendTextMailReply = _reflection.GeneratedProtocolMessageType('SendTextMailReply', (_message.Message,), {
+  'DESCRIPTOR' : _SENDTEXTMAILREPLY,
+  '__module__' : 'mail_pb2'
   # @@protoc_insertion_point(class_scope:SendTextMailReply)
-  ))
+  })
 _sym_db.RegisterMessage(SendTextMailReply)
 
 

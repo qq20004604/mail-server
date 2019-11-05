@@ -3,20 +3,25 @@
 
 from concurrent import futures
 import yagmail
-from config.mail import MAIL_CONFIG
+from config.mail_server_config import MAIL_CONFIG, PORT
 import grpc
+import sys
+
+sys.path.append("proto")
+
 import proto.mail_pb2 as mail_pb2
 import proto.mail_pb2_grpc as mail_pb2_grpc
 import time
 
-# 邮件服务的端口
-PORT = 49999
+# GRPC的最大工作线程（应该是线程吧）
 MAX_WORKERS = 10
 
 
 # 记录请求发送邮件的日志
 def log_mail_request(receiver, title, content, account, pw):
-    with open('./log/mail_send.log', 'a')as f:
+    if type(receiver) is list:
+        receiver = str(receiver)
+    with open('./log/mail_server_send.log', 'a')as f:
         f.write('time:%s||receiver:%s||title:%s||content:%s||acount:%s||pw:%s\n' % (
             time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
             receiver, title, content, account, pw
@@ -25,7 +30,7 @@ def log_mail_request(receiver, title, content, account, pw):
 
 # 记录请求发送邮件的错误
 def log_mail_request_err(receiver, title, content, account, pw, err):
-    with open('./log/mail_send.log', 'a')as f:
+    with open('./log/mail_server_send_err.log', 'a')as f:
         f.write('time:%s||receiver:%s||title:%s||content:%s||acount:%s||pw:%s||err:%s\n' % (
             time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
             receiver, title, content, account, pw, err
@@ -45,33 +50,33 @@ class MailManager(object):
         self.receiver = request.receiver
         self.title = request.title
         self.content = request.content
-        self.account = request.accountw
+        self.account = request.account
         self.pw = request.pw
 
     # 校验逻辑。例如校验账号密码，收件人，邮件标题和正文
     def verify(self):
         vr = self._verify_receiver()
         # 如果返回结果不是200，说明验证失败，返回错误信息
-        if vr.code is not 200:
+        if vr['code'] is not 200:
             return {
-                'code': va.code,
-                'msg': va.msg
+                'code': vr['code'],
+                'msg': vr['msg']
             }
 
         va = self._verify_account()
         # 如果返回结果不是200，说明验证失败，返回错误信息
-        if va.code is not 200:
+        if va['code'] is not 200:
             return {
-                'code': va.code,
-                'msg': va.msg
+                'code': va['code'],
+                'msg': va['msg']
             }
 
         vc = self._verify_content()
         # 如果返回结果不是200，说明验证失败，返回错误信息
-        if vc.code is not 200:
+        if vc['code'] is not 200:
             return {
-                'code': va.code,
-                'msg': va.msg
+                'code': va['code'],
+                'msg': va['msg']
             }
 
         # 此时校验全部通过，允许发送邮件
@@ -114,30 +119,34 @@ class MailManager(object):
         }
 
     # 发送纯文本
-    def send_text(self, receiver, title, content):
+    def send_text(self):
         ver = self.verify()
-        if ver.code is not 200:
+        if ver['code'] is not 200:
             return {
-                'code': ver.code,
-                'msg': ver.msg
+                'code': ver['code'],
+                'msg': ver['msg']
             }
         try:
-            # 发送邮件
-            self.mail_sender.send(receiver, title, content)
+            if len(self.receiver) <= 1:
+                self.receiver = [self.receiver[0], ]
             # 打个日志，记录一下发送的邮件
             log_mail_request(self.receiver, self.title, self.content, self.account, self.pw)
+            # 发送邮件
+            self.mail_sender.send(self.receiver, self.title, self.content)
+            print('send success')
             # 返回处理结果
             return {
                 'code': 200,
                 'msg': 'success'
             }
         except BaseException as e:
+            print('send error')
             # 打个日志，记录一下错误的发送信息
-            log_mail_request_err(self.receiver, self.title, self.content, self.account, self.pw)
+            log_mail_request_err(self.receiver, self.title, self.content, self.account, self.pw, e)
             # 如果抛出异常，说明发送失败了
             return {
                 'code': 0,
-                'msg': str(e)
+                'msg': e
             }
 
 
@@ -145,12 +154,13 @@ class MailManager(object):
 class Mail(mail_pb2_grpc.MailManagerServiceServicer):
     # 当 proto 文件中定义的 rpc 被触发时（指 rpc SendMail 这个方法），执行本函数
     def SendMail(self, request, context):
+        print('get a mail send request')
         # 初始化实例
         mm = MailManager(request)
         # 发送邮件
         send_result = mm.send_text()
         # 返回处理结果
-        return mail_pb2.SendTextMailReply(send_result.code, send_result.msg)
+        return mail_pb2.SendTextMailReply(code=send_result['code'], msg=send_result['msg'])
 
 
 # 邮件服务
@@ -177,4 +187,4 @@ class GRPCServer(object):
 if __name__ == '__main__':
     # mail = MailManager()
     # mail.send_text(receiver='20004604@qq.com', title='消息通知', content='这个是正文内容啦')
-    pass
+    GRPCServer().run()
