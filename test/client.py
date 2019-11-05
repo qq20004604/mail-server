@@ -38,16 +38,12 @@ class GRPCClient(object):
         # 调用 rpc 服务，XxxxxStub 这个类名是固定生成的，参照 mail_pb2_grpc.py
         self.stub = mail_pb2_grpc.MailManagerServiceStub(channel)
 
-    def send_mail(self):
-        is_error = False
-        error_msg = ''
-        receiver = ['test@qq.com']
-        title = '剁手器通知'
-        content = ''
-        account = ''
-        pw = ''
-        with open('./content.html', 'r', encoding='utf-8') as f:
-            content = ''.join(f.readlines()).replace(' ', '').replace('\n', '')
+    def send_mail(self, mail_data):
+        receiver = mail_data['receiver']
+        title = mail_data['title']
+        content = mail_data['content']
+        account = mail_data['account']
+        pw = mail_data['pw']
         # print(content)
         response = None
         try:
@@ -55,6 +51,7 @@ class GRPCClient(object):
             s = mail_pb2.SendTextMailRequest(receiver=receiver, title=title, content=content, account=account, pw=pw)
             log_mail_request(receiver=receiver, title=title, content=content, account=account, pw=pw)
             response = self.stub.SendMail(s)
+            return response
         except BaseException as e:
             log_mail_request_err(receiver=receiver, title=title, content=content, account=account, pw=pw, err=str(e))
             return {
@@ -62,12 +59,21 @@ class GRPCClient(object):
                 'msg': 'send error',
                 'data': e
             }
-        finally:
-            return response
 
 
 # 测试和示例代码
 if __name__ == '__main__':
     client = GRPCClient()
-    res2 = client.send_mail()
+    content = ''
+    # 这里是测试读取 html 内容（即发送超文本样式），也可以只发纯文本
+    with open('./content.html', 'r', encoding='utf-8') as f:
+        content = ''.join(f.readlines()).replace(' ', '').replace('\n', '')
+    mail_data = {
+        'receiver': ['test@test.com'],
+        'title': '剁手器通知',
+        'content': content,
+        'account': '使用邮件服务的账号（指服务，而不是邮箱的账号）',
+        'pw': '使用邮件服务的密码（指服务，而不是邮箱的密码）'
+    }
+    res2 = client.send_mail(mail_data)
     print(res2)
