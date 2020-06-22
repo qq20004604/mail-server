@@ -30,9 +30,10 @@ docker images
 echo "【4】停止并删除之前的容器"
 docker container stop "$containername" && docker container rm "$containername"
 
-echo "【5】生成容器，并和mysql容器link到一起"
-docker container run --name "$containername" -v "$(pwd)/$logfilename":/usr/src/app/log --net="$dockernetwork" -p "$exportport:$imageport" -d "$image"
-#docker container run --name "$containername" --link=mysql-article-tags:db -p "$exportport:$imageport" -d "$image"
+#echo "【5】生成容器，并和mysql容器link到一起"
+#docker container run --name "$containername" -v "$(pwd)/$logfilename":/usr/src/app/log --net="$dockernetwork" -p "$exportport:$imageport" -d "$image"
+echo "【5】生成容器"
+docker container run --name "$containername" -v "$(pwd)/$logfilename":/usr/src/app/log -p "$exportport:$imageport" -d "$image"
 # 这个是加入docker网络，是另外一种方式，更方便
 # docker container run --name article_server --net=base-mysql-database-network -p 55002:55002 -d article_server:0.0.1
 

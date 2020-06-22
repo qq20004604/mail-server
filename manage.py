@@ -3,9 +3,10 @@
 
 from concurrent import futures
 import yagmail
-from config.mail_server_config import MAIL_CONFIG, PORT
+from config.mail_server_config import MAIL_CONFIG, PORT, SECRET_KEY
 import grpc
 import sys
+import re
 
 sys.path.append("proto")
 
@@ -18,22 +19,22 @@ MAX_WORKERS = 10
 
 
 # 记录请求发送邮件的日志
-def log_mail_request(receiver, title, content, account, pw):
+def log_mail_request(receiver, title, content):
     if type(receiver) is list:
         receiver = str(receiver)
     with open('./log/mail_server_send.log', 'a')as f:
-        f.write('time:%s||receiver:%s||title:%s||content:%s||acount:%s||pw:%s\n' % (
+        f.write('time:%s||receiver:%s||title:%s||content:%s\n' % (
             time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-            receiver, title, content, account, pw
+            receiver, title, content
         ))
 
 
 # 记录请求发送邮件的错误
-def log_mail_request_err(receiver, title, content, account, pw, err):
+def log_mail_request_err(receiver, title, content, secretkey, err):
     with open('./log/mail_server_send_err.log', 'a')as f:
-        f.write('time:%s||receiver:%s||title:%s||content:%s||acount:%s||pw:%s||err:%s\n' % (
+        f.write('time:%s||receiver:%s||title:%s||content:%s||secretkey:%s||err:%s\n' % (
             time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-            receiver, title, content, account, pw, err
+            receiver, title, content, secretkey, err
         ))
 
 
@@ -50,11 +51,10 @@ class MailManager(object):
         self.receiver = request.receiver
         self.title = request.title
         self.content = request.content
-        self.account = request.account
-        self.pw = request.pw
+        self.secretkey = request.secretkey
 
     # 校验逻辑。例如校验账号密码，收件人，邮件标题和正文
-    def verify(self):
+    def _verify(self):
         vr = self._verify_receiver()
         # 如果返回结果不是200，说明验证失败，返回错误信息
         if vr['code'] is not 200:
@@ -63,9 +63,9 @@ class MailManager(object):
                 'msg': vr['msg']
             }
 
-        va = self._verify_account()
+        va = self._verify_key()
         # 如果返回结果不是200，说明验证失败，返回错误信息
-        if va['code'] is not 200:
+        if va['code'] != 200:
             return {
                 'code': va['code'],
                 'msg': va['msg']
@@ -73,7 +73,7 @@ class MailManager(object):
 
         vc = self._verify_content()
         # 如果返回结果不是200，说明验证失败，返回错误信息
-        if vc['code'] is not 200:
+        if vc['code'] != 200:
             return {
                 'code': va['code'],
                 'msg': va['msg']
@@ -86,27 +86,43 @@ class MailManager(object):
         }
 
     # 校验推送人的账号密码
-    def _verify_account(self):
-        # 这里进行校验，校验通过返回True，否则返回False
-        account = self.account
-        pw = self.pw
-        # todo 测试时，默认通过，正常情况下应该从内存或者数据库验证一遍
+    def _verify_key(self):
+        secretkey = self.secretkey
         # 1、验证推送邮件时是否提供账号密码
-        # 2、验证账号是否存在
-        # 3、验证账号密码是否正确
+        # 1.1 没有——》False， code = 404
+        # 1.2 有，在 SECRET_KEY 里，返回 True
+        # 2. 返回 False
+        if secretkey is None:
+            return {
+                'code': 404,
+                'msg': '你必须提供密钥，方能调用邮件服务'
+            }
+        if secretkey in SECRET_KEY:
+            return {
+                'code': 200
+            }
         return {
-            'code': 200,
-            'msg': 'success'
+            'code': 0,
+            'msg': '密钥错误，请联系邮件服务管理员：QQ：20004604'
         }
 
     # 校验接受者的邮件地址
     def _verify_receiver(self):
-        receiver = self.receiver
+        receiver_list = self.receiver
         # 校验邮件地址是否合法
-        # todo 调试阶段默认正确
+        p = re.compile(r"[^@]+@[^@]+\.[^@]+")
+        err_list = []
+        for receiver in receiver_list:
+            if p.match(receiver) is None:
+                err_list.append(receiver)
+        if len(err_list) > 0:
+            return {
+                'code': 0,
+                'msg': '邮箱地址：%s ，其格式错误' % str(err_list)
+            }
+
         return {
-            'code': 200,
-            'msg': 'success'
+            'code': 200
         }
 
     # 校验内容
@@ -120,17 +136,17 @@ class MailManager(object):
 
     # 发送纯文本
     def send_text(self):
-        ver = self.verify()
-        if ver['code'] is not 200:
+        v_info = self._verify()
+        if v_info['code'] is not 200:
             return {
-                'code': ver['code'],
-                'msg': ver['msg']
+                'code': v_info['code'],
+                'msg': v_info['msg']
             }
         try:
             if len(self.receiver) <= 1:
                 self.receiver = [self.receiver[0], ]
             # 打个日志，记录一下发送的邮件
-            log_mail_request(self.receiver, self.title, self.content, self.account, self.pw)
+            log_mail_request(self.receiver, self.title, self.content)
             # 发送邮件
             self.mail_sender.send(self.receiver, self.title, self.content)
             print('send success')
@@ -142,7 +158,7 @@ class MailManager(object):
         except BaseException as e:
             print('send error')
             # 打个日志，记录一下错误的发送信息
-            log_mail_request_err(self.receiver, self.title, self.content, self.account, self.pw, e)
+            log_mail_request_err(self.receiver, self.title, self.content, self.secretkey, e)
             # 如果抛出异常，说明发送失败了
             return {
                 'code': 0,

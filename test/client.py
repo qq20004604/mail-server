@@ -12,20 +12,20 @@ from config.mail_server_config import PORT, HOST
 
 
 # 记录请求发送邮件的日志
-def log_mail_request(receiver, title, content, account, pw):
+def log_mail_request(receiver, title, content):
     with open('../log/mail_client_send.log', 'a')as f:
-        f.write('time:%s||receiver:%s||title:%s||content:%s||acount:%s||pw:%s\n' % (
+        f.write('time:%s||receiver:%s||title:%s||content:%s\n' % (
             time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-            receiver, title, content, account, pw
+            receiver, title, content
         ))
 
 
 # 记录请求发送邮件的日志
-def log_mail_request_err(receiver, title, content, account, pw, err):
+def log_mail_request_err(receiver, title, content, secretkey, err):
     with open('../log/mail_client_send_err.log', 'a')as f:
-        f.write('time:%s||receiver:%s||title:%s||content:%s||acount:%s||pw:%s||err:%s\n' % (
+        f.write('time:%s||receiver:%s||title:%s||content:%s||secretkey:%s||err:%s\n' % (
             time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-            receiver, title, content, account, pw, err
+            receiver, title, content, secretkey, err
         ))
 
 
@@ -42,18 +42,17 @@ class GRPCClient(object):
         receiver = mail_data['receiver']
         title = mail_data['title']
         content = mail_data['content']
-        account = mail_data['account']
-        pw = mail_data['pw']
+        secretkey = mail_data['secretkey']
         # print(content)
         response = None
         try:
             # s 是一个基于 dict 的实例
-            s = mail_pb2.SendTextMailRequest(receiver=receiver, title=title, content=content, account=account, pw=pw)
-            log_mail_request(receiver=receiver, title=title, content=content, account=account, pw=pw)
+            s = mail_pb2.SendTextMailRequest(receiver=receiver, title=title, content=content, secretkey=secretkey)
+            log_mail_request(receiver=receiver, title=title, content=content)
             response = self.stub.SendMail(s)
             return response
         except BaseException as e:
-            log_mail_request_err(receiver=receiver, title=title, content=content, account=account, pw=pw, err=str(e))
+            log_mail_request_err(receiver=receiver, title=title, content=content, secretkey=secretkey, err=str(e))
             return {
                 'code': 0,
                 'msg': 'send error',
@@ -69,11 +68,10 @@ if __name__ == '__main__':
     with open('./content.html', 'r', encoding='utf-8') as f:
         content = ''.join(f.readlines()).replace(' ', '').replace('\n', '')
     mail_data = {
-        'receiver': ['test@test.com'],
+        'receiver': ['20004604@qq.com'],
         'title': '剁手器通知',
         'content': content,
-        'account': '使用邮件服务的账号（指服务，而不是邮箱的账号）',
-        'pw': '使用邮件服务的密码（指服务，而不是邮箱的密码）'
+        'secretkey': 'Iuiu@8kvEFHPTWMTkp2kYxrH*d^q!s%6'
     }
     res2 = client.send_mail(mail_data)
     print(res2)
