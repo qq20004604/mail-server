@@ -68,9 +68,9 @@ if __name__ == '__main__':
     with open('./content.html', 'r', encoding='utf-8') as f:
         content = ''.join(f.readlines()).replace(' ', '').replace('\n', '')
     mail_data = {
-        'receiver': ['20004604@qq.com', 'wd1229@qq.com'],
-        'title': '同时发送2个收件人的测试邮件',
-        'content': content,
+        'receiver': ['20004604@qq.com', 'qq20004604@icloud.com', '674714966@qq.com', 'zero931025@163.com'],
+        'title': '同时发送4个收件人的测试邮件（测试序号：2）',
+        'content': '这是一个群发邮件测试的内容》》》内容\n第二行的内容',
         'secretkey': 'Iuiu@8kvEFHPTWMTkp2kYxrH*d^q!s%6'
     }
     res2 = client.send_mail(mail_data)
