@@ -68,8 +68,8 @@ if __name__ == '__main__':
     with open('./content.html', 'r', encoding='utf-8') as f:
         content = ''.join(f.readlines()).replace(' ', '').replace('\n', '')
     mail_data = {
-        'receiver': ['20004604@qq.com'],
-        'title': '剁手器通知',
+        'receiver': ['20004604@qq.com', 'wd1229@qq.com'],
+        'title': '同时发送2个收件人的测试邮件',
         'content': content,
         'secretkey': 'Iuiu@8kvEFHPTWMTkp2kYxrH*d^q!s%6'
     }

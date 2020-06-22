@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# 默认是密送模式（BBC）
+# 需要改为正常模式，把 send 时，bcc 改为 to
 
 from concurrent import futures
 import yagmail
@@ -143,12 +145,15 @@ class MailManager(object):
                 'msg': v_info['msg']
             }
         try:
+            # 注意一个问题，RPC传过来的 self.receiver 不是 list，而是一个特殊类型（看起来很像数组），但实际并不是
             if len(self.receiver) <= 1:
                 self.receiver = [self.receiver[0], ]
+            else:
+                self.receiver = list(self.receiver)
             # 打个日志，记录一下发送的邮件
             log_mail_request(self.receiver, self.title, self.content)
             # 发送邮件
-            self.mail_sender.send(self.receiver, self.title, self.content)
+            self.mail_sender.send(bcc=self.receiver, subject=self.title, contents=self.content)
             print('send success')
             # 返回处理结果
             return {
