@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\nmail.proto\"Z\n\x13SendTextMailRequest\x12\x10\n\x08receiver\x18\x01 \x03(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\x12\x11\n\tsecretkey\x18\x04 \x01(\t\".\n\x11SendTextMailReply\x12\x0c\n\x04\x63ode\x18\x01 \x01(\x05\x12\x0b\n\x03msg\x18\x02 \x01(\t2L\n\x12MailManagerService\x12\x36\n\x08SendMail\x12\x14.SendTextMailRequest\x1a\x12.SendTextMailReply\"\x00\x62\x06proto3')
+  serialized_pb=_b('\n\nmail.proto\"Z\n\x13SendTextMailRequest\x12\x10\n\x08receiver\x18\x01 \x03(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x03(\t\x12\x11\n\tsecretkey\x18\x04 \x01(\t\".\n\x11SendTextMailReply\x12\x0c\n\x04\x63ode\x18\x01 \x01(\x05\x12\x0b\n\x03msg\x18\x02 \x01(\t2L\n\x12MailManagerService\x12\x36\n\x08SendMail\x12\x14.SendTextMailRequest\x1a\x12.SendTextMailReply\"\x00\x62\x06proto3')
 )
 
 
@@ -49,8 +49,8 @@ _SENDTEXTMAILREQUEST = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='content', full_name='SendTextMailRequest.content', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      number=3, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),

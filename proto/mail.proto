@@ -15,7 +15,7 @@ message SendTextMailRequest {
     // 邮件标题
     string title = 2;
     // 邮件正文
-    string content = 3;
+    repeated string content = 3;
     // 邮件服务的密钥，必须有秘钥才能推送邮件
     string secretkey = 4;
 }
